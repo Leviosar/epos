@@ -1,5 +1,5 @@
 // EPOS RV64 PMU Mediator Declarations
-
+// TODO: Checar reg40 vs reg43
 #ifndef __rv64_pmu_h
 #define __rv64_pmu_h
 

@@ -424,7 +424,7 @@ if(interrupt) {
 
     ASM("       csrr    x3,  mstatus            \n");
 
-    ASM("       sd      x3,     0(sp)           \n"     // push ST
+    ASM("       sd      x3,     8(sp)           \n"     // push ST
         "       sd      x1,    16(sp)           \n"     // push RA
         "       sd      x5,    24(sp)           \n"     // push x5-x31
         "       sd      x6,    32(sp)           \n"
