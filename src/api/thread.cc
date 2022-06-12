@@ -254,6 +254,11 @@ void Thread::sleep(Queue * q)
     _scheduler.suspend(prev);
     prev->_state = WAITING;
     prev->_waiting = q;
+
+    if (Criterion::collecting) {
+        prev->criterion().collect();
+    }
+
     q->insert(&prev->_link);
 
     Thread * next = _scheduler.chosen();

@@ -132,6 +132,38 @@ public:
     RR(int p = NORMAL, Tn & ... an): Priority(p) {}
 };
 
+// Non-preemptive dynamic priority scheduler that benefits I/O-bound threads
+// We're assuming by the EPOS design that a thread going into "sleep" is
+// being interrupted for I/O operations.
+class IOB: public Priority
+{
+public:
+    static const bool timed = true;
+    static const bool dynamic = true;
+    static const bool preemptive = false;
+    static const bool collecting = true;
+
+public:
+    template <typename ... Tn>
+    
+    IOB(int p = NORMAL, Tn & ... an) : Priority(p), _sleep_counter{0} {}
+
+    unsigned int _sleep_counter;
+
+    bool collect(bool end = false) {
+        _sleep_counter++;
+        return false;
+    }
+
+    operator const volatile int() const volatile {
+        if (_priority == IDLE) return IDLE;
+
+        if (_priority - _sleep_counter < 1) return HIGH;
+
+        return _priority - _sleep_counter;
+    }
+};
+
 // First-Come, First-Served (FIFO)
 class FCFS: public Priority
 {
