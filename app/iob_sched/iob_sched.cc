@@ -11,8 +11,8 @@ Thread * workers[THREAD_COUNT];
 
 OStream cout;
 
-int cpu_work() {
-    cout << "Starting CPU bound thread execution" << endl;
+int cpu_work(int index) {
+    cout << "Starting CPU bound thread execution with priority of " << (int) workers[index]->priority() << endl;
 
     unsigned int dummy[10000000];
 
@@ -24,17 +24,17 @@ int cpu_work() {
         sum += dummy[i];
     }
 
-    cout << "Finishing CPU bound thread execution" << endl;
+    cout << "Finishing CPU bound thread execution with priority of " << (int) workers[index]->priority() << endl;
 
     return sum;
 }
 
-int io_work() {
-    cout << "Starting IO bound thread execution" << endl;
+int io_work(int index) {
+    cout << "Starting IO bound thread execution with priority of " << (int) workers[index]->priority() << endl;
 
     Delay(6000);
     
-    cout << "Finishing IO bound thread execution" << endl;
+    cout << "Finishing IO bound thread execution with priority of  " << (int) workers[index]->priority() << endl;
 
     return 0;
 }
@@ -46,10 +46,10 @@ int main()
     for (auto i = 0; i < THREAD_COUNT; i++) {
         if (i % 2 == 0) {
             cout << "Creating IO bound thread worker" << endl;
-            workers[i] = new Thread(&io_work);
+            workers[i] = new Thread(&io_work, i);
         } else {
             cout << "Creating CPU bound thread worker" << endl;
-            workers[i] = new Thread(&cpu_work);
+            workers[i] = new Thread(&cpu_work, i);
         }
     }
 
