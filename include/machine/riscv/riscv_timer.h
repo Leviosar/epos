@@ -78,7 +78,7 @@ public:
 
     void handler(const Handler & handler) { _handler = handler; }
 
-private:
+    // These last two functions are here for testing purposes for p2 ONLY and should be private instead
     static volatile CPU::Reg64 & reg(unsigned int o) {
         return reinterpret_cast<volatile CPU::Reg64 *>(Memory_Map::CLINT_BASE)[o / sizeof(CPU::Reg64)];
     }
@@ -86,7 +86,7 @@ private:
     static void config(const Hertz & frequency) {
         reg(MTIMECMP + (MTIMECMP_CORE_OFFSET * CPU::id())) = reg(MTIME) + (CLOCK / frequency);
     }
-
+private:
     static void int_handler(Interrupt_Id i);
 
     static void init();
