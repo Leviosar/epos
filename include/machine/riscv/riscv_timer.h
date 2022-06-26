@@ -46,7 +46,9 @@ protected:
         else
             db<Timer>(WRN) << "Timer not installed!"<< endl;
 
-        _current[CPU::id()] = _initial;
+        for (unsigned int i = 0; i < CPU::cores(); i++) {
+            _current[i] = _initial;
+        }
     }
 
 public:
