@@ -132,6 +132,19 @@ public:
     RR(int p = NORMAL, Tn & ... an): Priority(p) {}
 };
 
+// Global Round-Robin
+class GRR: public RR
+{
+public:
+    static const unsigned int HEADS = Traits<Machine>::CPUS;
+
+public:
+    template <typename ... Tn>
+    GRR(int p = NORMAL, Tn & ... an): RR(p) {}
+
+    static unsigned int current_head() { return CPU::id(); }
+};
+
 // Non-preemptive dynamic priority scheduler that benefits I/O-bound threads
 // We're assuming by the EPOS design that a thread going into "sleep" is
 // being interrupted for I/O operations.
@@ -178,5 +191,14 @@ public:
 };
 
 __END_SYS
+
+__BEGIN_UTIL
+
+// Scheduling Queues
+template<typename T>
+class Scheduling_Queue<T, GRR>:
+public Multihead_Scheduling_List<T> {};
+
+__END_UTIL
 
 #endif
