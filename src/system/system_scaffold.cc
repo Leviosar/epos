@@ -39,7 +39,7 @@ extern "C" {
     void _print(const char * s) { Display::puts(s); }
     static volatile int _print_lock = -1;
     void _print_preamble() {
-        if(Traits<System>::multicore) {
+        if(CPU::cores() > 1) {
             static char tag[] = "<0>: ";
 
             int me = CPU::id();
@@ -52,7 +52,7 @@ extern "C" {
         }
     }
     void _print_trailler(bool error) {
-        if(Traits<System>::multicore) {
+        if(CPU::cores() > 1) {
             static char tag[] = " :<0>";
 
             if(_print_lock != -1) {

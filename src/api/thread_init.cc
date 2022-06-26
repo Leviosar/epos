@@ -24,11 +24,11 @@ void Thread::init()
     Main * main = reinterpret_cast<Main *>(__epos_app_entry);
 
     // Idle thread will start running on every CPU except the 0
-    Thread::state idle_creation_state = Thread::RUNNING;
+    Thread::State idle_creation_state = Thread::RUNNING;
 
     if (CPU::id() == 0) {
         // On CPU 0 we should create idle as ready, because the running thread will be main
-        Thread::state idle_creation_state = Thread::READY;
+        idle_creation_state = Thread::READY;
         // Only CPU 0 will start running the main thread
         new (SYSTEM) Thread(Thread::Configuration(Thread::RUNNING, Thread::MAIN), main);
     }
