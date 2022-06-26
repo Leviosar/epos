@@ -334,7 +334,7 @@ public:
     static void mint_enable()  { ASM("csrsi mstatus, %0" : : "i"(MIE) : "cc"); }
     static void mint_disable() { ASM("csrci mstatus, %0" : : "i"(MIE) : "cc"); }
 
-    static Reg mhartid() { Reg r; ASM("csrr %0, mhartid" : "=r"(r) : : "memory", "cc"); return r & 0x3; }
+    static Reg mhartid() { Reg r; ASM("csrr %0, mhartid" : "=r"(r) : : "memory", "cc"); return r; }
 
     static void mscratch(Reg r)   { ASM("csrw mscratch, %0" : : "r"(r) : "cc"); }
     static Reg  mscratch() { Reg r; ASM("csrr %0, mscratch" :  "=r"(r) : : ); return r; }
