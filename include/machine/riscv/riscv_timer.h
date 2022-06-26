@@ -79,8 +79,9 @@ public:
     void handler(const Handler & handler) { _handler = handler; }
 
 private:
-    // TODO: Usar reg64
-    static volatile CPU::Reg32 & reg(unsigned int o) { return reinterpret_cast<volatile CPU::Reg32 *>(Memory_Map::CLINT_BASE)[o / sizeof(CPU::Reg32)]; }
+    static volatile CPU::Reg64 & reg(unsigned int o) {
+        return reinterpret_cast<volatile CPU::Reg64 *>(Memory_Map::CLINT_BASE)[o / sizeof(CPU::Reg64)];
+    }
 
     static void config(const Hertz & frequency) {
         reg(MTIMECMP + (MTIMECMP_CORE_OFFSET * CPU::id())) = reg(MTIME) + (CLOCK / frequency);
