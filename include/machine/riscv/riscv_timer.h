@@ -46,7 +46,7 @@ protected:
         else
             db<Timer>(WRN) << "Timer not installed!"<< endl;
 
-        _current = _initial;
+        _current[CPU::id()] = _initial;
     }
 
 public:
@@ -56,13 +56,13 @@ public:
         _channels[_channel] = 0;
     }
 
-    Tick read() { return _current; }
+    Tick read() { return _current[CPU::id()]; }
 
     int restart() {
-        db<Timer>(TRC) << "Timer::restart() => {f=" << frequency() << ",h=" << reinterpret_cast<void *>(_handler) << ",count=" << _current << "}" << endl;
+        db<Timer>(TRC) << "Timer::restart() => {f=" << frequency() << ",h=" << reinterpret_cast<void *>(_handler) << ",count=" << _current[CPU::id()] << "}" << endl;
 
-        int percentage = _current * 100 / _initial;
-        _current = _initial;
+        int percentage = _current[CPU::id()] * 100 / _initial;
+        _current[CPU::id()] = _initial;
 
         return percentage;
     }
@@ -81,7 +81,7 @@ private:
     static volatile CPU::Reg32 & reg(unsigned int o) { return reinterpret_cast<volatile CPU::Reg32 *>(Memory_Map::CLINT_BASE)[o / sizeof(CPU::Reg32)]; }
 
     static void config(const Hertz & frequency) {
-        reg(MTIMECMP) = reg(MTIME) + (CLOCK / frequency);
+        reg(MTIMECMP + (MTIMECMP_CORE_OFFSET * CPU::id())) = reg(MTIME) + (CLOCK / frequency);
     }
 
     static void int_handler(Interrupt_Id i);
@@ -92,7 +92,7 @@ protected:
     unsigned int _channel;
     Tick _initial;
     bool _retrigger;
-    volatile Tick _current;
+    volatile Tick _current[Traits<Build>::CPUS];
     Handler _handler;
 
     static Timer * _channels[CHANNELS];
