@@ -9,6 +9,11 @@
 
 __BEGIN_UTIL
 
+extern "C" {
+    void _lock_heap();
+    void _unlock_heap();
+}
+
 // Heap
 class Heap: private Grouping_List<char>
 {
@@ -32,7 +37,9 @@ public:
 
     void * alloc(unsigned int bytes) {
         db<Heaps>(TRC) << "Heap::alloc(this=" << this << ",bytes=" << bytes;
-
+        
+        _lock_heap();
+        
         if(!bytes)
             return 0;
 
@@ -58,6 +65,8 @@ public:
             *addr++ = reinterpret_cast<long>(this);
         *addr++ = bytes;
 
+        _unlock_heap();
+
         db<Heaps>(TRC) << ") => " << reinterpret_cast<void *>(addr) << endl;
 
         return addr;
@@ -66,11 +75,15 @@ public:
     void free(void * ptr, unsigned int bytes) {
         db<Heaps>(TRC) << "Heap::free(this=" << this << ",ptr=" << ptr << ",bytes=" << bytes << ")" << endl;
 
+        _lock_heap();
+
         if(ptr && (bytes >= sizeof(Element))) {
             Element * e = new (ptr) Element(reinterpret_cast<char *>(ptr), bytes);
             Element * m1, * m2;
             insert_merging(e, &m1, &m2);
         }
+
+        _unlock_heap();
     }
 
     static void typed_free(void * ptr) {
