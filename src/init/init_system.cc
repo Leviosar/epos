@@ -53,22 +53,22 @@ public:
             CPU::smp_barrier(); // CPUs will only leave when CPU 0 finishes machine init
 
             CPU::init();
-            Timer::init();
         }
-        
+
+        Timer::init();
 
         db<Init>(INF) << "Initializing system abstractions: " << endl;
         System::init();
 
         // Randomize the Random Numbers Generator's seed
-        if(Traits<Random>::enabled && CPU::id() == 0) {
-            db<Init>(INF) << "Randomizing the Random Numbers Generator's seed." << endl;
-            if(Traits<TSC>::enabled)
-                Random::seed(TSC::time_stamp());
+        // if(Traits<Random>::enabled && CPU::id() == 0) {
+        //     db<Init>(INF) << "Randomizing the Random Numbers Generator's seed." << endl;
+        //     if(Traits<TSC>::enabled)
+        //         Random::seed(TSC::time_stamp());
 
-            if(!Traits<TSC>::enabled)
-                db<Init>(WRN) << "Due to lack of entropy, Random is a pseudo random numbers generator!" << endl;
-        }
+        //     if(!Traits<TSC>::enabled)
+        //         db<Init>(WRN) << "Due to lack of entropy, Random is a pseudo random numbers generator!" << endl;
+        // }
 
         // Initialization continues at init_end
     }

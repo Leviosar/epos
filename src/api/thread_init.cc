@@ -13,15 +13,16 @@ void Thread::init()
 {
     db<Init, Thread>(TRC) << "Thread::init()" << endl;
 
-    CPU::smp_barrier();
-
-    Criterion::init();
 
     typedef int (Main)();
 
     // If EPOS is a library, then adjust the application entry point to __epos_app_entry, which will directly call main().
     // In this case, _init will have already been called, before Init_Application to construct MAIN's global objects.
     Main * main = reinterpret_cast<Main *>(__epos_app_entry);
+
+    CPU::smp_barrier();
+
+    Criterion::init();
 
     // Idle thread will start running on every CPU except the 0
     Thread::State idle_creation_state = Thread::RUNNING;
@@ -34,7 +35,7 @@ void Thread::init()
     }
 
     // Idle thread creation does not cause rescheduling (see Thread::constructor_epilogue)
-    new (SYSTEM) Thread(Thread::Configuration(Thread::RUNNING, idle_creation_state), &Thread::idle);
+    new (SYSTEM) Thread(Thread::Configuration(idle_creation_state, Thread::IDLE), &Thread::idle);
 
     CPU::smp_barrier();
 
