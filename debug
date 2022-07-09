@@ -1,0 +1,3 @@
+killall -9 qemu-system-riscv
+make veryclean
+make APPLICATION=$1 debug
