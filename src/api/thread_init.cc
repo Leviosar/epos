@@ -13,7 +13,7 @@ void Thread::init()
 {
     db<Init, Thread>(TRC) << "Thread::init()" << endl;
 
-    if (CPU::id() == 0) {
+    if (Traits<Thread>::smp && CPU::id() == 0) {
         IC::int_vector(IC::INT_RESCHEDULER, rescheduler);
     }
 
@@ -26,7 +26,6 @@ void Thread::init()
     Criterion::init();
 
     // Idle thread will start running on every CPU except the 0
-    Thread::State idle_creation_state = Thread::RUNNING;
 
     if (CPU::id() == 0) {
         typedef int (Main)();
@@ -36,13 +35,12 @@ void Thread::init()
         Main * main = reinterpret_cast<Main *>(__epos_app_entry);
 
         // On CPU 0 we should create idle as ready, because the running thread will be main
-        idle_creation_state = Thread::READY;
         // Only CPU 0 will start running the main thread
         new (SYSTEM) Thread(Thread::Configuration(Thread::RUNNING, Thread::MAIN), main);
     }
 
     // Idle thread creation does not cause rescheduling (see Thread::constructor_epilogue)
-    new (SYSTEM) Thread(Thread::Configuration(idle_creation_state, Thread::IDLE), &Thread::idle);
+    new (SYSTEM) Thread(Thread::Configuration(Thread::READY, Thread::IDLE), &Thread::idle);
 
     CPU::smp_barrier();
 

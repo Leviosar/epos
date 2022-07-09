@@ -21,6 +21,7 @@ class Timer: private Timer_Common, private CLINT
 protected:
     typedef IC_Common::Interrupt_Id Interrupt_Id;
 
+    static const bool multicore = Traits<System>::multicore;
     static const unsigned int CHANNELS = 2;
     static const unsigned int FREQUENCY = Traits<Timer>::FREQUENCY;
 
@@ -46,9 +47,8 @@ protected:
         else
             db<Timer>(WRN) << "Timer not installed!"<< endl;
 
-        for (unsigned int i = 0; i < CPU::cores(); i++) {
+        for(unsigned int i = 0; i < Traits<Machine>::CPUS; i++)
             _current[i] = _initial;
-        }
     }
 
 public:
@@ -78,15 +78,13 @@ public:
 
     void handler(const Handler & handler) { _handler = handler; }
 
-    // These last two functions are here for testing purposes for p2 ONLY and should be private instead
-    static volatile CPU::Reg64 & reg(unsigned int o) {
-        return reinterpret_cast<volatile CPU::Reg64 *>(Memory_Map::CLINT_BASE)[o / sizeof(CPU::Reg64)];
-    }
+private:
+    static volatile CPU::Reg32 & reg(unsigned int o) { return reinterpret_cast<volatile CPU::Reg32 *>(Memory_Map::CLINT_BASE)[o / sizeof(CPU::Reg32)]; }
 
     static void config(const Hertz & frequency) {
-        reg(MTIMECMP + (MTIMECMP_CORE_OFFSET * CPU::id())) = reg(MTIME) + (CLOCK / frequency);
+        reg(MTIMECMP + MTIMECMP_CORE_OFFSET * CPU::id()) = reg(MTIME) + (CLOCK / frequency);
     }
-private:
+
     static void int_handler(Interrupt_Id i);
 
     static void init();
@@ -95,7 +93,7 @@ protected:
     unsigned int _channel;
     Tick _initial;
     bool _retrigger;
-    volatile Tick _current[Traits<Build>::CPUS];
+    volatile Tick _current[Traits<Machine>::CPUS];
     Handler _handler;
 
     static Timer * _channels[CHANNELS];
