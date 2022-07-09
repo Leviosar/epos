@@ -13,14 +13,15 @@ void Thread::init()
 {
     db<Init, Thread>(TRC) << "Thread::init()" << endl;
 
-
-    typedef int (Main)();
-
-    // If EPOS is a library, then adjust the application entry point to __epos_app_entry, which will directly call main().
-    // In this case, _init will have already been called, before Init_Application to construct MAIN's global objects.
-    Main * main = reinterpret_cast<Main *>(__epos_app_entry);
+    if (CPU::id() == 0) {
+        IC::int_vector(IC::INT_RESCHEDULER, rescheduler);
+    }
 
     CPU::smp_barrier();
+
+    if (Traits<System>::multicore) {
+        IC::enable(IC::INT_RESCHEDULER);
+    }
 
     Criterion::init();
 
@@ -28,6 +29,12 @@ void Thread::init()
     Thread::State idle_creation_state = Thread::RUNNING;
 
     if (CPU::id() == 0) {
+        typedef int (Main)();
+
+        // If EPOS is a library, then adjust the application entry point to __epos_app_entry, which will directly call main().
+        // In this case, _init will have already been called, before Init_Application to construct MAIN's global objects.
+        Main * main = reinterpret_cast<Main *>(__epos_app_entry);
+
         // On CPU 0 we should create idle as ready, because the running thread will be main
         idle_creation_state = Thread::READY;
         // Only CPU 0 will start running the main thread
