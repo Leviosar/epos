@@ -16,10 +16,10 @@ private:
 public:
     Init_System() {
         
+        db<Init>(TRC) << "Init_System()" << endl;
         CPU::smp_barrier();
 
         if (CPU::id() == 0) {
-            db<Init>(TRC) << "Init_System()" << endl;
 
             db<Init>(INF) << "Init:si=" << *System::info() << endl;
 
@@ -52,23 +52,26 @@ public:
         } else {
             CPU::smp_barrier(); // CPUs will only leave when CPU 0 finishes machine init
 
+            db<Init>(INF) << "Initializing the CPU: " << endl;
             CPU::init();
+
+            db<Init>(INF) << "Initializing the machine: " << endl;
+            Timer::init();
         }
 
-        Timer::init();
 
         db<Init>(INF) << "Initializing system abstractions: " << endl;
         System::init();
 
         // Randomize the Random Numbers Generator's seed
-        // if(Traits<Random>::enabled && CPU::id() == 0) {
-        //     db<Init>(INF) << "Randomizing the Random Numbers Generator's seed." << endl;
-        //     if(Traits<TSC>::enabled)
-        //         Random::seed(TSC::time_stamp());
+        if(Traits<Random>::enabled && CPU::id() == 0) {
+            db<Init>(INF) << "Randomizing the Random Numbers Generator's seed." << endl;
+            if(Traits<TSC>::enabled)
+                Random::seed(TSC::time_stamp());
 
-        //     if(!Traits<TSC>::enabled)
-        //         db<Init>(WRN) << "Due to lack of entropy, Random is a pseudo random numbers generator!" << endl;
-        // }
+            if(!Traits<TSC>::enabled)
+                db<Init>(WRN) << "Due to lack of entropy, Random is a pseudo random numbers generator!" << endl;
+        }
 
         // Initialization continues at init_end
     }
