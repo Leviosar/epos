@@ -347,6 +347,14 @@ void Thread::rescheduler(IC::Interrupt_Id i)
 void Thread::time_slicer(IC::Interrupt_Id i)
 {
     lock();
+    
+    if (Criterion::switching) {
+        Thread * prev = running(); 
+        if(prev->criterion()._switch()) {
+            db<Thread>(WRN) << "Preempted(this=" << prev << ", queue=" << prev->criterion().current_queue << ")" << endl;
+        }
+    }
+
     reschedule();
     unlock();
 }
