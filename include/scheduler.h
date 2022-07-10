@@ -24,12 +24,19 @@ class Scheduling_Criterion_Common
 
 public:
     // Priorities
+    // enum : int {
+    //     MAIN   = 0,
+    //     HIGH   = 1,
+    //     NORMAL = (unsigned(1) << (sizeof(int) * 8 - 1)) - 3,
+    //     LOW    = (unsigned(1) << (sizeof(int) * 8 - 1)) - 2,
+    //     IDLE   = (unsigned(1) << (sizeof(int) * 8 - 1)) - 1
+    // };
     enum : int {
         MAIN   = 0,
-        HIGH   = 1,
-        NORMAL = (unsigned(1) << (sizeof(int) * 8 - 1)) - 3,
-        LOW    = (unsigned(1) << (sizeof(int) * 8 - 1)) - 2,
-        IDLE   = (unsigned(1) << (sizeof(int) * 8 - 1)) - 1
+        HIGH   = 100,
+        NORMAL = 120,
+        LOW    = 130,
+        IDLE   = 281
     };
 
     // Constructor helpers
@@ -55,11 +62,13 @@ public:
     static const bool charging = false;
     static const bool awarding = false;
     static const bool migrating = false;
+    static const bool switching = false;
     static const bool track_idle = false;
     static const bool task_wide = false;
     static const bool cpu_wide = false;
     static const bool system_wide = false;
     static const unsigned int QUEUES = 1;
+    static const unsigned int current_queue = 1;
 
     // Runtime Statistics (for policies that don't use any; that´s why its a union)
     union Statistics {
@@ -93,6 +102,7 @@ public:
     bool collect(bool end = false) { return false; }
     bool charge(bool end = false) { return true; }
     bool award(bool end = false) { return true; }
+    bool _switch(bool end = false) { return false; }
 
     volatile Statistics & statistics() { return _statistics; }
 
@@ -143,6 +153,55 @@ public:
     GRR(int p = NORMAL, Tn & ... an): RR(p) {}
 
     static unsigned int current_head() { return CPU::id(); }
+};
+
+// The Chosen One
+/*
+    The Chosen One is a constant time scheduling algorithm based on the old O(1) linux scheduler
+
+    It uses two queues: active and expired (emulated here by a multiplier) for preventing starvation,
+    putting newly added threads into the active queue and switching them after one QUANTUM of execution.
+
+    In the original O(1), if the active queue is empty, then the pointers for the queues are swapped
+    and the expired becomes the new active and a new cycle of executions will begin.
+
+    In The Chosen One we opted for using a single queue with an offset multiplier for its first implementation,
+    when a thread uses all its CPU time, we switch the current_queue. All members of queue 01 will have
+    a higher priority than any member of queue 02.
+
+    We've added a new 'switching' flag on policies, and a new _switch method which is called every time
+    a schedule timer interruption is triggered for a thread.
+
+    In a scenario where new threads are continuosly added to the ready queue, this scheduler can suffer
+    from starvation, but so does O(1) and thats one of the reasons why it was replaced for CFS.
+*/
+class TCO: public RR
+{
+public:
+    static const unsigned int HEADS = Traits<Machine>::CPUS;
+    static const bool switching = true;
+public:
+    template <typename ... Tn>
+    TCO(int p = NORMAL, Tn & ... an): RR(p), current_queue{1} { }
+
+    unsigned int current_queue;
+
+    // IDLE and MAIN threads are always kept in 01 queue, thus we do not need
+    // to check for specific cases in the casting operator
+    operator const volatile int() const volatile {
+        return _priority * current_queue;
+    }
+
+    static unsigned int current_head() { return CPU::id(); }
+
+    bool _switch() {
+        // Never change MAIN or IDLE queues
+        if (_priority == MAIN || _priority == IDLE) return false;
+        
+        current_queue = current_queue == 1 ? 2 : 1;
+
+        return true;
+    }
 };
 
 // Non-preemptive dynamic priority scheduler that benefits I/O-bound threads
@@ -229,6 +288,10 @@ __BEGIN_UTIL
 // Scheduling Queues
 template<typename T>
 class Scheduling_Queue<T, GRR>:
+public Multihead_Scheduling_List<T> {};
+
+template<typename T>
+class Scheduling_Queue<T, TCO>:
 public Multihead_Scheduling_List<T> {};
 
 __END_UTIL

@@ -108,6 +108,7 @@ class RM;
 class DM;
 class EDF;
 class GRR;
+class TCO;
 class Fixed_CPU;
 class CPU_Affinity;
 class GEDF;
