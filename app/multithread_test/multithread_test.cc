@@ -10,9 +10,9 @@
 
 using namespace EPOS;
 
-const int iterations = 10;
+#define THREAD_COUNT 8
 
-Thread * workers[10];
+Thread * workers[8];
 
 OStream cout;
 
@@ -23,27 +23,30 @@ int main()
     cout << "Starting scheduling tests with " << CPU::cores() << " cores" << endl;
     cout << endl;
 
-    for (auto i = 0; i < iterations; i++) {
+    for (auto i = 0; i < THREAD_COUNT; i++) {
         workers[i] = new Thread(&worker, i);
         cout << "Created thread " << i << endl;
     }
 
-    for (auto i = 0; i < iterations; i++) {
+    // Each time one of the words is swapped from a queue to another
+    // a WRN is raised, we kept warnings ON for test purposes
+    for (auto i = 0; i < THREAD_COUNT; i++) {
         int work = workers[i]->join();
-        cout << "Thread " << i << " returned " << work << endl;
+        cout << "Thread " << i << " returned from core " << work << " with priority " << workers[i]->criterion() << endl;
     }
 
     return 0;
 }
 
+// Worker with dummy operations that take long enough to be preempted
 int worker(int i) {
-    cout << "Core " << CPU::id() << " is saying hello world: " << i << "!" << endl;
-    
     int j = 0;
 
-    for (auto i = 0; i < 100000000; i++) {
+    int core = CPU::id();
+
+    for (auto i = 0; i < 10000000; i++) {
         j++;
     }
 
-    return j + i;
+    return core;
 }
