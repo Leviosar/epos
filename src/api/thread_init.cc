@@ -13,15 +13,7 @@ void Thread::init()
 {
     db<Init, Thread>(TRC) << "Thread::init()" << endl;
 
-    if (Traits<Thread>::smp && CPU::id() == 0) {
-        IC::int_vector(IC::INT_RESCHEDULER, rescheduler);
-    }
-
     CPU::smp_barrier();
-
-    if (Traits<System>::multicore) {
-        IC::enable(IC::INT_RESCHEDULER);
-    }
 
     Criterion::init();
 
@@ -56,6 +48,14 @@ void Thread::init()
 
     // No more interrupts until we reach init_end
     CPU::int_disable();
+
+    if (Traits<Thread>::smp) {
+        if (CPU::id() == 0) {
+            IC::int_vector(IC::INT_RESCHEDULER, rescheduler);
+        }
+
+        IC::enable(IC::INT_RESCHEDULER);
+    }
     
     CPU::smp_barrier();
     
